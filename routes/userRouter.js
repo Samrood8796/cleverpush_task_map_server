@@ -6,6 +6,6 @@ import upload from '../config/multer.js';
 router.post('/register', register)
 router.post('/login', login)
 router.post('/add-blog',upload.single("myFile"), addBlog)
-router.get('/get-blog', getBlogs)
+router.get('/get-blogs/:id', getBlogs)
 
-export default router;  
+export default router;    

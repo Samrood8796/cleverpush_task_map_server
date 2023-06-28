@@ -1,3 +1,4 @@
+import cloudinary from "../config/cloudinary.js";
 import Blog from "../models/Blog.js";
 import User from "../models/User.js"
 import bcrypt from 'bcrypt'
@@ -41,7 +42,7 @@ export const login = async (req, res) => {
         const { password, ...user } = userData._doc
         console.log("user===========");
         console.log(user);
-        res.status(200).json({ user })  
+        res.status(200).json(user)  
 
     } catch (err) {
         console.log(err);
@@ -51,33 +52,38 @@ export const login = async (req, res) => {
 
 export const addBlog = async (req, res) => {
     try {
-        let { userId, desc } = req.body
+        let { description, title, category, authorName, id } = req.body
         let image = ""
         let result;
         if (req.file) {
             result = await cloudinary.uploader.upload(req.file.path)
             image = result.secure_url
         }
-        let newPost = new Blog({
-            desc: desc,
-            image: image,
-            author: userId
+        let newPost = new Blog({ 
+            description: description, 
+            cover: image,
+            authorName: authorName,
+            title:title,
+            category:category,
+            author:id
         })
         const post = await newPost.save()
-        const updatedpost = await Blog.findById(post._id).populate("author")
+        const updatedpost = await Blog.findById(post._id)
         res.status(200).json(updatedpost)
     } catch (err) {
         console.log(err);
         return res.status(500).json({ msg: "internal error occured" })
     }
 }
-                              
+                               
 export const getBlogs = async (req, res) => {
     try {
-        const { id } = req.user
+        const { id } = req.params
+        console.log(id);
         const user = await User.findById(id)
         if (!user) return res.status(400).json('user not found')
-        const posts = await Blog.find({isDeleted:false}).populate('author').populate('comments.author userName profilePc')
+        const posts = await Blog.find({author:id})
+        console.log("ddddddddd");
         return res.status(200).json(posts)
     } catch (err) {
         console.log(err);

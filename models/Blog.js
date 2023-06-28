@@ -1,25 +1,26 @@
 import mongoose, { Schema, model } from 'mongoose';
 
 const blogSchema = Schema({
-    name: {
+    title: {
         type: String,
         required: true,
     },
-    userName: {
+    category: {
         type: String,
         required: true,
-        unique: true
     },
-    email: {
+    description: {
         type: String,
         required: true,
-        unique: true
     },
-    password: {
+    authorName: {
         type: String,
     },
-    phoneNumber: {
-        type: Number,
+    author:{
+        type:String
+    },
+    cover: {
+        type: String,
     },
     createdAt:{
         type:Date,
