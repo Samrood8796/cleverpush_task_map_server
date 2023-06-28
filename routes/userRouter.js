@@ -1,13 +1,11 @@
 import express from 'express'
+import { login, register, addBlog, getBlogs } from '../controllers/userController.js';
 const router = express.Router()
-import { addUser, deleteUser, editUser, searchUser, allUsers, getUserDetails, changeStatus } from '../controllers/userController.js';
 import upload from '../config/multer.js';
 
-router.post('/add-user',upload.single("profile"), addUser)
-router.put('/edit-user',editUser)
-router.delete('/delete-user/:id', deleteUser)
-router.get('/search-user/:key', searchUser)
-router.get('/all-users', allUsers)
-router.get('/get-user', getUserDetails)  
-router.put('/change-status', changeStatus)
-export default router; 
+router.post('/register', register)
+router.post('/login', login)
+router.post('/add-blog',upload.single("myFile"), addBlog)
+router.get('/get-blog', getBlogs)
+
+export default router;  

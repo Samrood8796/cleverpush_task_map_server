@@ -1,136 +1,86 @@
-import cloudinary from '../config/cloudinary.js';
-import User from '../model/userModel.js'
-
-export const addUser = async (req, res) => {
-    const {
-        firstName,
-        lastName,
-        email,
-        mobile,
-        gender,
-        status,
-        location
-    } = req.body
-
+import Blog from "../models/Blog.js";
+import User from "../models/User.js"
+import bcrypt from 'bcrypt'
+export const register = async (req, res) => {
+    console.log("hgggggggggggggg");
     try {
         console.log(req.body);
         let user = await User.findOne({ email: req.body.email })
         if (user) {
             return res.status(403).json({ msg: "Email Already Exist" })
         }
+        const saltRounds = await bcrypt.genSalt(10)
+        const hashedpassword = await bcrypt.hash(req.body.password, saltRounds)
+        user = await User.create({ 
+            name: req.body.name,
+            userName: req.body.userName,
+            email: req.body.email,
+            password: hashedpassword,
+            phoneNumber: req.body.phoneNumber 
+        }) 
+        console.log(user);
+        res.status(200).json("registered successfully ") 
+    } catch (err) {  
+        console.log(err);
+        return res.status(500).json("internal error Occured" + err)
+    }
+}
 
+//login
+export const login = async (req, res) => {
+    try {
+        const userData = await User.findOne({ email: req.body.email }) 
+        if (!userData) {
+            return res.status(400).json({ msg: "user Not Exist" })
+        }
+        const comparePassword = await bcrypt.compare(req.body.password, userData.password)
+        if (!comparePassword) {
+            return res.status(401).json({ msg: "incorrect password" })
+        }  
+     
+        const { password, ...user } = userData._doc
+        console.log("user===========");
+        console.log(user);
+        res.status(200).json({ user })  
+
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ error: err.message })
+    }
+}
+
+export const addBlog = async (req, res) => {
+    try {
+        let { userId, desc } = req.body
         let image = ""
         let result;
         if (req.file) {
             result = await cloudinary.uploader.upload(req.file.path)
             image = result.secure_url
         }
-        user = await User.create({
-            firstName: firstName,
-            lastName: lastName,
-            email: email,
-            gender: gender,
-            mobile: mobile,
-            status: status,
-            profile: image,
-            location: location
+        let newPost = new Blog({
+            desc: desc,
+            image: image,
+            author: userId
         })
-        res.status(200).json("registered successfully")
+        const post = await newPost.save()
+        const updatedpost = await Blog.findById(post._id).populate("author")
+        res.status(200).json(updatedpost)
     } catch (err) {
         console.log(err);
-        return res.status(500).json("internal error Occured" + err)
+        return res.status(500).json({ msg: "internal error occured" })
     }
 }
-
-export const editUser = async (req, res) => {
+                              
+export const getBlogs = async (req, res) => {
     try {
-        const {id,...others}=req.body
-        User.findByIdAndUpdate(id, others, {
-            runValidators: true, 
-        }).then((response) => {
-            console.log(response);
-            res.status(200).json("edited successfully ")
-        })
+        const { id } = req.user
+        const user = await User.findById(id)
+        if (!user) return res.status(400).json('user not found')
+        const posts = await Blog.find({isDeleted:false}).populate('author').populate('comments.author userName profilePc')
+        return res.status(200).json(posts)
     } catch (err) {
         console.log(err);
-        return res.status(500).json("internal error Occured" + err)
-    }
-}
-
-export const deleteUser = async (req, res) => {
-    try {
-        const id = req.params.id
-        User.findByIdAndRemove(id).then(() => {
-            res.status(200).json("deleted successfully ")
-        })
-    } catch (err) {
-        console.log(err);
-        return res.status(500).json("internal error Occured" + err)
-    }
-}
-
-export const searchUser = async (req, res) => {
-    const { key } = req.params
-    try {
-        const users = await User.find({
-            "$or": [
-                {
-                    firstName: { $regex: key }
-                },
-                {
-                    email: { $regex: key }
-                }
-            ]
-        })
-        res.status(200).json(users);
-    } catch (err) {
-        res.status(404).json({ message: err.message })
-    }
-}
-
-export const allUsers = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page)
-        const limit = parseInt(req.query.limit)
-        const startIndex = (page - 1) * limit;
-        const endIndex = page * limit;
-
-        const totalCount = await User.countDocuments();
-        console.log(totalCount);
-        const users = await User.find().skip(startIndex).limit(endIndex);
-        const response = {
-            currentPage: page,
-            totalPages: Math.ceil(totalCount / limit),
-            totalCount: totalCount,
-            users: users,
-        };
-        res.status(200).json(response);
-    } catch (err) {
-        console.log(err);
-        res.status(404).json({ message: err.message })
-    }
-}
-export const getUserDetails = async (req, res) => {
-    try {
-        const response = await User.findById(req.query.id)
-        res.status(200).json(response);
-    } catch (err) {
-        console.log(err);
-        res.status(404).json({ message: err.message })
-    }
-}
-
-export const changeStatus = async (req, res) => {
-    try {
-        const { id, status } = req.body
-        await User.findByIdAndUpdate(
-            id,
-            { status: status },
-            { new: true, runValidators: true }
-        );
-        res.status(200).json("status updated");
-    } catch (err) {
-        console.log(err); 
-        res.status(404).json({ message: err.message })
+        return res.status(400).json("internal error")
     }
 }
