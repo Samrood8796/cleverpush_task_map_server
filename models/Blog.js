@@ -13,11 +13,10 @@ const blogSchema = Schema({
         type: String,
         required: true,
     },
-    authorName: {
-        type: String,
-    },
     author:{
-        type:String
+        type: Schema.Types.ObjectId,
+        ref: 'users',
+        required: true
     },
     cover: {
         type: String,
