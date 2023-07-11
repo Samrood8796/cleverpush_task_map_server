@@ -1,30 +1,30 @@
 import mongoose, { Schema, model } from 'mongoose';
 
-const blogSchema = Schema({
-    title: {
+const locationSchema = Schema({
+    lng: {
         type: String,
         required: true,
     },
-    category: {
+    lat: {
+        type: String,
+        required: true,
+    },
+    title: {
         type: String,
         required: true,
     },
     description: {
         type: String,
-        required: true,
     },
-    author:{
+    createdBy: {
         type: Schema.Types.ObjectId,
         ref: 'users',
         required: true
     },
-    cover: {
-        type: String,
-    },
-    createdAt:{
-        type:Date,
-        default:Date.now()
+    createdAt: {
+        type: Date,
+        default: Date.now()
     }
 })
 
-export default model("blog", blogSchema)
+export default model("locations", locationSchema)
